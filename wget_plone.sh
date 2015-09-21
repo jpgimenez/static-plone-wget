@@ -64,6 +64,15 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
     wget --keep-session-cookies \
          --no-check-certificate \
          --save-cookies "$cookies_file" \
+         --user $2 \
+         --password $3 \
+         $1
+
+    wget --keep-session-cookies \
+         --no-check-certificate \
+         --save-cookies "$cookies_file" \
+         --user $2 \
+         --password $3 \
          --post-data "__ac_name=$2&__ac_password=$3&form.submitted=1&cookies_enabled=1&js_enabled=0" \
          --output-document="$login_file" \
          $1/login_form
@@ -75,6 +84,8 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
     fi
 
     wget --load-cookies $cookies_file \
+         --user $2 \
+         --password $3 \
          --no-parent \
          --no-check-certificate \
          --html-extension \
@@ -86,13 +97,14 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
          -e robots=off \
          --wait=0 \
          --quota=inf \
-         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html" \
-         --exclude-directories="search,*com_mailto*" \
+         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html,@@search" \
+         --exclude-directories="search,*@@search*,*com_mailto*" \
          $1
 
 # Without authentication
 else
     wget --no-parent \
+         --relative \
          --no-check-certificate \
          --html-extension \
          --convert-links \
@@ -103,8 +115,8 @@ else
          -e robots=off \
          --wait=0 \
          --quota=inf \
-         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html" \
-         --exclude-directories="search,*com_mailto*" \
+         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html,@@search" \
+         --exclude-directories="search,*@@search*,*com_mailto*" \
          $1
 fi
 
@@ -140,7 +152,7 @@ read -e acceptance
 
 shopt -s nocasematch
 if [[ $acceptance == "y" ]] || [[ $acceptance == "yes" ]]; then
-    x-www-browser "$folder/index.html" &
+    open "$folder/index.html" &
 fi
 shopt -u nocasematch
 
