@@ -15,6 +15,20 @@
 
 cookies_file="cookies-test.txt"
 login_file="login_form"
+WGET_COMMON_OPTS='--no-parent
+         --no-check-certificate
+         --recursive
+         --adjust-extension
+         --convert-links
+         --restrict-file-names=windows
+         --level=inf
+         --page-requisites
+         -e robots=off
+         --wait=0
+         --quota=inf
+         --timestamping
+         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,full_review_list,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html,*@@search*,@@content-checkout,*@@history*,versions_history_form,edit,atct_edit,sharing,select_default_view,@@manage-portlets,@@manage-viewlets,@@manage-content-rules,placeful_workflow_configuration,*folder_factories,*++add++*,*folder_contents?*select=screen"
+         --exclude-directories="search,*@@search*,*com_mailto*"'
 
 function display_help {
     echo "Usage: wget_plone.sh SITE_URL [USERNAME PASSWORD]
@@ -46,9 +60,9 @@ fi
 # With authentication
 if [[ -n "$2" ]] && [[ -n "$3" ]]; then
     echo "
-    WARNING: Do NOT attempt to Wget a site with an admin
-    user account or account with elevated privileges as this 
-    process will hit ALL links on the site. You should only 
+    WARNING: To run this script with an admin user account or account 
+    with elevated privileges put your site in read-only, as this 
+    process will hit ALL links on the site. Or you could 
     attempt this process with AT MOST a 'Reader' account or 
     someone without Edit rights anywhere.
     -----------------------------------------------------------
@@ -66,6 +80,7 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
          --save-cookies "$cookies_file" \
          --user $2 \
          --password $3 \
+         --output-document=/dev/null \
          $1
 
     wget --keep-session-cookies \
@@ -74,7 +89,7 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
          --user $2 \
          --password $3 \
          --post-data "__ac_name=$2&__ac_password=$3&form.submitted=1&cookies_enabled=1&js_enabled=0" \
-         --output-document="$login_file" \
+         --output-document=/dev/null \
          $1/login_form
 
     if [[ `cat $cookies_file | wc -l` -lt 5 ]]; then
@@ -86,37 +101,12 @@ if [[ -n "$2" ]] && [[ -n "$3" ]]; then
     wget --load-cookies $cookies_file \
          --user $2 \
          --password $3 \
-         --no-parent \
-         --no-check-certificate \
-         --html-extension \
-         --convert-links \
-         --restrict-file-names=windows \
-         --recursive \
-         --level=inf \
-         --page-requisites \
-         -e robots=off \
-         --wait=0 \
-         --quota=inf \
-         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html,@@search" \
-         --exclude-directories="search,*@@search*,*com_mailto*" \
+         $WGET_COMMON_OPTS \
          $1
 
 # Without authentication
 else
-    wget --no-parent \
-         --relative \
-         --no-check-certificate \
-         --html-extension \
-         --convert-links \
-         --restrict-file-names=windows \
-         --recursive \
-         --level=inf \
-         --page-requisites \
-         -e robots=off \
-         --wait=0 \
-         --quota=inf \
-         --reject "*_form,RSS,*login*,logged_in,*logout*,logged_out,createObject*,select_default_page,selectViewTemplate*,object_cut,object_copy,object_rename,delete_confirmation,content_status_*,addtoFavorites,pdf.html,print.html,@@search" \
-         --exclude-directories="search,*@@search*,*com_mailto*" \
+    wget $WGET_COMMON_OPTS \
          $1
 fi
 
@@ -146,6 +136,10 @@ popd
 #nowhere.
 echo "Fixing up any remaining absolute links to point to --> '#'..."
 find $folder -name "*.html" -print0 | xargs -0 sed -i -r "s/$escaped_address[a-zA-Z0-9\_\/\.\=\%\&\:\;\-]*/\#/g"
+echo "Fixing spaces in @import url"
+find $folder -type f -a -name "*.html" -print0 | xargs -0 sed -i -r "s/(@import url[\(\.a-zA-Z\_\/]*)\s/\1%20/g"
+echo "Removing unwanted elements"
+find $folder -type f -a -name "*.html" -exec ./html-rm.py --ids='edit-bar portal-personaltools' --file={} \;
 
 echo "View in your default web browser? (y/n)"
 read -e acceptance
