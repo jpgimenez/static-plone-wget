@@ -139,7 +139,7 @@ find $folder -name "*.html" -print0 | xargs -0 sed -i -r "s/$escaped_address[a-z
 echo "Fixing spaces in @import url"
 find $folder -type f -a -name "*.html" -print0 | xargs -0 sed -i -r "s/(@import url[\(\.a-zA-Z\_\/]*)\s/\1%20/g"
 echo "Removing unwanted elements"
-find $folder -type f -a -name "*.html" -exec ./html-rm.py --ids='edit-bar portal-personaltools' --file={} \;
+find $folder -type f -a -name "*.html" -exec ./html-rm.py --xpaths='//div[@id="edit-bar"] //div[@id="portal-personaltools"] //div[@class="managePortletsLink"]' --file={} \;
 
 echo "View in your default web browser? (y/n)"
 read -e acceptance

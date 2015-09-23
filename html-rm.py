@@ -6,9 +6,9 @@ import sys
 
 def main(argv):
     try:                                
-        opts, args = getopt.getopt(argv, "", ["help", "file=", "ids="])
+        opts, args = getopt.getopt(argv, "", ["help", "file=", "xpaths="])
     except getopt.GetoptError:
-      print 'html-rm.py --file=<inputfile> --ids=<id1>,<id2>...'
+      print 'html-rm.py --file=<inputfile> --xpaths="<xpath1> <xpath2>"'
       sys.exit(2)                     
     for opt, arg in opts:
         if opt == '-h':
@@ -16,16 +16,14 @@ def main(argv):
             sys.exit()
         elif opt == "--file":
             inputfile = arg
-        elif opt == "--ids":
-            ids = arg.split()
+        elif opt == "--xpaths":
+            xpaths = arg.split()
     fhtml = open(inputfile)
     tree = html.fromstring(fhtml.read())
     fhtml.close()
-    for id in ids:
-        try:
-            tree.get_element_by_id(id).drop_tree()
-        except KeyError:
-            continue
+    for xpath in xpaths:
+        for el in tree.xpath(xpath):
+            el.drop_tree()
     fhtml = open(inputfile, 'w')
     tree = fhtml.write(html.tostring(tree))
     fhtml.close()
